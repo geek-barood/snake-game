@@ -4,15 +4,24 @@ var EMPTY=0, SNAKE=1, FOOD=2;
 var UP=0, DOWN=1, LEFT=2, RIGHT=3;
 var CELLSIZE=20;
 var canvas = null;
+var scoreCanvas = null;
 var ctx = null;
+var scoreCtx = null;
 var start = null;
 var ROWS=30, COLS=30;
+var score = null;
 var COLOR = {
     red: "#f00",
     black: "#000",
     blue: "#00f",
     gray: "#aaa",
-    green: "#347C17"
+    green: "#347C17",
+    snake: "#ff0"
+};
+var GAMESTATE = {
+    PAUSED: 0,
+    RUNNING: 1,
+    STATE: null
 };
 var KEY = {
     LEFT: 37,
@@ -91,7 +100,7 @@ function clearCell(x, y) {
 
 function drawFood(x, y) {
     var imgApple = new Image();
-    imgApple.src = "images/food_apple.gif";
+    imgApple.src = "images/latest.png";
     imgApple.onload = function() {
         ctx.drawImage(imgApple, CELLSIZE*x, CELLSIZE*y, CELLSIZE, CELLSIZE);
     }
@@ -102,7 +111,7 @@ function renderCanvas() {
         for (var j=0; j<grid.cols; ++j) {
             switch(grid.get(i, j)) {
                 case SNAKE:
-                    drawCell(COLOR.green, i, j);
+                    drawCell(COLOR.snake, i, j);
                     break;
                 case FOOD:
                     //drawCell(COLOR.gray, i, j);
@@ -136,7 +145,7 @@ function update() {
         }
         if ((newX >= COLS || newX < 0 || newY >= ROWS || newY < 0)
                 || grid.get(newX, newY) === SNAKE) {
-            init();
+            GAMESTATE.STATE = GAMESTATE.DEAD;
             return;
         }
         if (grid.get(newX, newY) !== FOOD) {
@@ -144,6 +153,8 @@ function update() {
             grid.set(EMPTY, cell.x, cell.y);
         } else {
             setFood();
+            ++score;
+            updateScore();
         }
         snake.add(newX, newY);
         grid.set(SNAKE, newX, newY);
@@ -154,15 +165,24 @@ var slow = null;
 var verySlow = 2*slow;
 var mod = null;
 function gameLoop(timeStamp) {
-    if (frames < verySlow) mod = verySlow;
-    else mod = slow;
-    if (frames % mod === 0) {
-        update();
-        snake.prev_direction = snake.direction;
+    if (GAMESTATE.STATE === GAMESTATE.RUNNING) {
+        if (frames < verySlow) mod = verySlow;
+        else mod = slow;
+        if (frames % mod === 0) {
+            update();
+            snake.prev_direction = snake.direction;
+            renderCanvas();
+        }
+        renderCanvas();
+        frames++;
+    } else if (GAMESTATE.STATE === GAMESTATE.DEAD) {
+        if (!deadTime) deadTime = timeStamp;
+        showDeadScreen(ctx);
+        if (timeStamp - deadTime > 2000) {
+            init();
+        }
     }
-    renderCanvas();
     window.requestAnimationFrame(gameLoop, canvas);
-    frames++;
 };
 
 document.onkeydown = function(e) {
@@ -183,27 +203,47 @@ document.onkeydown = function(e) {
             return;
     }
 };
+
+function showDeadScreen(context) {
+    context.font = "56px Knewave";
+    context.fillStyle = "#02c";
+    context.fillText("You Died! Try again.", 50, 300);
+}
+
+function updateScore() {
+    scoreCtx.clearRect(0, 0, scoreCanvas.width, scoreCanvas.height);
+    scoreCtx.font = "46px 'Love Ya Like A Sister'";
+    scoreCtx.fillText("Score: " + score, 80, 40);
+}
 function main(elemId) {
     if (!elemId) {
         canvas = document.createElement("canvas");
         document.body.appendChild(canvas);
     } else {
-        canvas = document.findByElementId(elemId);
+        canvas = document.getElementById(elemId);
+        scoreCanvas = document.getElementById("score_canvas");
     }
     canvas.width = COLS*CELLSIZE;
     canvas.height = ROWS*CELLSIZE;
     ctx = canvas.getContext("2d");
+    scoreCtx = scoreCanvas.getContext("2d");
     init();
     window.requestAnimationFrame(gameLoop, canvas);
 };
 
 function init() {
     frames = 0;
-    slow = 5;
+    slow = 4;
+    score = 0;
     grid.init(EMPTY, ROWS, COLS);
     snake.init(UP, 15, 15);
     setFood();
+    scoreCtx.clearRect(0, 0, scoreCanvas.width, scoreCanvas.height);
+    updateScore();
+    //scoreCtx.fillText("Score:"+score, 60, 40);
     console.log("initialization complete...");
+    deadTime = null;
+    GAMESTATE.STATE = GAMESTATE.RUNNING;
 }
 
-main();
+main("game_canvas");

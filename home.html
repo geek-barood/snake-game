@@ -1,10 +1,40 @@
 <html>
+<head>
+<link href='http://fonts.googleapis.com/css?family=Knewave|Press+Start+2P|Love+Ya+Like+A+Sister' rel='stylesheet' type='text/css'>
+</head>
 <body>
+<div id="game_box">
+    <canvas id="score_canvas" height=200 width=300>
+    </canvas>
+    <canvas id="game_canvas" height=600 width=600></canvas>
+</div>
 </body>
 <script src="snake.js"></script>
-<style>
+<style type="text/css">
+#game_box {
+    position: relative;
+    width: 600px;
+    background-color: white;
+    margin: 0 auto;
+    top-margin: auto;
+    bottom-margin: 0px;
+}
+body {
+    background-color: rgba(67, 67, 67, 1);
+}
 canvas {
-    border: solid 2px;
+    position: absolute;
+    top: 0;
+}
+#game_canvas {
+    background-color: #eee;
+    background-image: url("images/grass-texture-5.jpg");
+    //border: solid 1px brown;
+    z-index: 0;
+}
+#score_canvas {
+    z-index: 1;
+    right: 0;
 }
 </style>
 </html>
